@@ -9,7 +9,7 @@ st.set_page_config(
 )
 
 # Tiêu đề ứng dụng
-st.title("💰 Ứng Dụng Tính Lãi Gửi Tiết Kiệm Bank")
+st.title("💰 Công Cụ Rửa Tiền của Bùi Đình Thương Trường")
 st.write("Nhập thông số tiền gửi bên dưới để tính toán chính xác tiền lãi nhận được theo các hình thức nhận lãi khác nhau.")
 
 st.divider()
