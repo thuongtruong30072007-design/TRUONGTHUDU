@@ -3,7 +3,7 @@ import pandas as pd
 
 # Cấu hình trang Streamlit
 st.set_page_config(
-    page_title="Công Cụ Tính Lãi Tiết Kiệm",
+    page_title="Công Cụ Rửa Tiền của Bùi Đình Thương Trường",
     page_icon="💰",
     layout="wide"
 )
