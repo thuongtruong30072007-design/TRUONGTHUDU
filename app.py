@@ -2,26 +2,54 @@ import streamlit as st
 st.image("logo.jpg.jpg")
 import pandas as pd
 
-# Cấu hình trang Streamlit
+# 1. Cấu hình trang Streamlit
 st.set_page_config(
-    page_title="Công Cụ Rửa Tiền của Bùi Đình Thương Trường",
+    page_title="Công Cụ Rửa Tiền Của Bùi Đình Thương Trường",
     page_icon="💰",
     layout="wide"
 )
 
+# 2. Bảng biểu lãi suất tham chiếu theo kỳ hạn (%/năm)
+INTEREST_RATES_BY_TERM = {
+    1: 3.0,   # 1 tháng
+    2: 3.0,   # 2 tháng
+    3: 3.4,   # 3 tháng
+    6: 4.5,   # 6 tháng
+    9: 4.5,   # 9 tháng
+    12: 5.2,  # 12 tháng
+    18: 5.5,  # 18 tháng
+    24: 5.7,  # 24 tháng
+    36: 5.8,  # 36 tháng
+    60: 6.0   # 60 tháng trở lên
+}
+
+def get_suggested_rate(term_months):
+    """Hàm tìm lãi suất tương ứng với kỳ hạn"""
+    matched_rate = 3.0
+    for term, rate in sorted(INTEREST_RATES_BY_TERM.items()):
+        if term_months >= term:
+            matched_rate = rate
+    return matched_rate
+
+# Hiển thị Logo (Nếu có)
+try:
+    st.image("logo.jpg.jpg", width=150)
+except Exception:
+    pass
+
 # Tiêu đề ứng dụng
-st.title("💰 Công Cụ Rửa Tiền của Bùi Đình Thương Trường")
-st.write("Nhập thông số tiền gửi bên dưới để tính toán chính xác tiền lãi nhận được theo các hình thức nhận lãi khác nhau.")
+st.title("💰 Công Cụ Tính Tiền Lãi Tiết Kiệm Tự Động")
+st.write("Chỉ cần chọn **Số tiền gửi** và **Kỳ hạn**, hệ thống sẽ tự động áp dụng lãi suất và tính toán ngay lập tức!")
 
 st.divider()
 
-# Tạo 2 cột cho phần nhập liệu và phần kết quả
+# Tạo 2 cột: Cột nhập liệu (bên trái) - Cột kết quả (bên phải)
 col_input, col_result = st.columns([1, 1.2], gap="large")
 
 with col_input:
     st.subheader("📥 Thông Tin Tiền Gửi")
     
-    # 1. Số tiền gửi
+    # 1. Nhập Số tiền gửi
     principal = st.number_input(
         "Số tiền gửi (VND):",
         min_value=1_000_000,
@@ -30,9 +58,9 @@ with col_input:
         step=10_000_000,
         format="%d"
     )
-    st.caption(f"👉 **Số tiền bằng chữ:** {principal:,.0f} VND")
+    st.caption(f"👉 **Số tiền:** {principal:,.0f} VND")
 
-    # 2. Kỳ hạn gửi
+    # 2. Nhập Kỳ hạn gửi
     months = st.number_input(
         "Kỳ hạn gửi (Tháng):",
         min_value=1,
@@ -41,56 +69,44 @@ with col_input:
         step=1
     )
 
-    # 3. Lãi suất
-    interest_rate = st.number_input(
-        "Lãi suất (%/năm):",
-        min_value=0.1,
-        max_value=30.0,
-        value=6.5,
-        step=0.1,
-        format="%.2f"
-    )
-
-    # 4. Hình thức nhận lãi
+    # 3. Chọn Hình thức nhận lãi
     payment_method = st.selectbox(
         "Hình thức nhận lãi:",
         options=["Cuối kỳ", "Hàng tháng", "Hàng quý"]
     )
 
-    # Nút bấm tính toán
-    calculate_btn = st.button("🧮 Tính Tiền Lãi", type="primary", use_container_width=True)
+    # Tự động lấy lãi suất theo kỳ hạn
+    interest_rate = get_suggested_rate(months)
+    st.info(f"💡 **Mức lãi suất tự động áp dụng ({months} tháng):** `{interest_rate}%/năm`")
 
-# Xử lý logic tính toán
+# ---------------- LOGIC TÍNH TOÁN TỰ ĐỘNG ----------------
 r = interest_rate / 100
 
 if payment_method == "Cuối kỳ":
-    # Lãi cuối kỳ = Số tiền * Lãi suất năm * (Số tháng / 12)
     total_interest = principal * r * (months / 12)
     periodic_interest = total_interest
     period_label = "Tiền lãi nhận cuối kỳ"
     num_periods = 1
 
 elif payment_method == "Hàng tháng":
-    # Lãi hàng tháng = Số tiền * (Lãi suất năm / 12)
     periodic_interest = principal * (r / 12)
     total_interest = periodic_interest * months
     period_label = "Tiền lãi nhận hàng tháng"
     num_periods = months
 
 elif payment_method == "Hàng quý":
-    # Lãi hàng quý = Số tiền * (Lãi suất năm / 4)
     periodic_interest = principal * (r / 4)
-    # Tố kỳ hạn theo quý (mỗi quý = 3 tháng)
     num_periods = months / 3
     total_interest = periodic_interest * num_periods
     period_label = "Tiền lãi nhận hàng quý"
 
 total_amount = principal + total_interest
 
+# ---------------- HIỂN THỊ KẾT QUẢ TỨC THÌ ----------------
 with col_result:
-    st.subheader("📊 Kết Quả Tính Toán")
+    st.subheader("📊 Kết Quả Tính Toán Tức Thì")
 
-    # Hiển thị kết quả tóm tắt bằng Metric Cards
+    # Hiển thị số liệu nổi bật bằng Card
     m_col1, m_col2 = st.columns(2)
     with m_col1:
         st.metric(
@@ -127,9 +143,7 @@ with col_result:
             "Tổng nhận (VND)": total_amount
         })
     elif payment_method == "Hàng tháng":
-        accumulated_interest = 0
         for m in range(1, months + 1):
-            accumulated_interest += periodic_interest
             is_last = (m == months)
             p_payout = principal if is_last else 0
             schedule_data.append({
@@ -152,7 +166,6 @@ with col_result:
                 "Tổng nhận (VND)": periodic_interest + p_payout
             })
             
-        # Tính phần dư tháng lẻ nếu kỳ hạn không chia hết cho 3
         if remaining_months > 0:
             extra_interest = principal * r * (remaining_months / 12)
             schedule_data.append({
